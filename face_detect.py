@@ -93,7 +93,8 @@ def get_frame_average(frame,shape, points_func):
     average = None
     # CHANGE THIS TO SUPPORT MORE FACES LATER
     points, polygon = points_func(shape)
-    average = get_average_in_roi(points,frame)
+    if len(points) > 0:
+        average = get_average_in_roi(points,frame)
     # for x, y in points:
     #         if x != None and y != None:
     #             cv2.circle(frame, (x, y), 1, (average[0], average[1], average[2]), -1)
@@ -122,30 +123,33 @@ def get_time_series(cap,start,frames,freq):
         print(frame)
         ret, fr = get_frame_at(frame,cap)
         rects, shapes = face_detect(fr,detector,predictor)
-        if shapes is not None:
+        if shapes != []:
             for shape in shapes:
                 left_cheeky.append(get_frame_average(fr,shape,get_left_cheek_points))
                 right_cheeky.append(get_frame_average(fr,shape, get_right_cheek_points))
+            if type(left_cheeky[-1]) == type(None):
+                left_cheeky[-1] = left_cheeky[-2]
+            if type(right_cheeky[-1]) == type(None):
+                right_cheeky[-1] = right_cheeky[-2]
         else:
             left_cheeky.append(left_cheeky[-1])
             right_cheeky.append(right_cheeky[-1])
             print("Duplicated")
-            
     return(np.array(left_cheeky), np.array(right_cheeky))
 
 
 
 
-filename = 'cameron.mp4'
+filename = 'sj.mp4'
 
 
 cap = cv2.VideoCapture(filename)
 
 
-l, r = get_time_series(cap,0,1000,10)
+l, r = get_time_series(cap,0,500,24)
 # print(l)
-np.save("left_2035.npy", l)
-np.save("right_2035.npy", r)
+np.save("left_sj.npy", l)
+np.save("right_sj.npy", r)
 
 # detector = dlib.get_frontal_face_detector()
 # predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")

@@ -1,3 +1,5 @@
+# TODO : work for multiple faces.
+
 from imutils import face_utils
 import numpy as np
 import argparse
@@ -87,10 +89,10 @@ def get_average_in_roi(masked_points, image):
     means = np.mean(values, 0)
     return means
 
-def get_frame_average(frame, cap, points_func,detector, predictor, flag=False):
-    rects, shapes = face_detect(frame,detector,predictor)
-    points, polygon = points_func(shapes[0])
+def get_frame_average(frame,shape, points_func):
+    average = None
     # CHANGE THIS TO SUPPORT MORE FACES LATER
+    points, polygon = points_func(shape)
     average = get_average_in_roi(points,frame)
     # for x, y in points:
     #         if x != None and y != None:
@@ -117,10 +119,18 @@ def get_time_series(cap,start,frames,freq):
     left_cheeky = []
     right_cheeky = []
     for frame in frame_list:
-        ret, fr = get_frame_at(frame,cap)
         print(frame)
-        left_cheeky.append(get_frame_average(fr,cap,get_left_cheek_points,detector,predictor))
-        right_cheeky.append(get_frame_average(fr,cap,get_right_cheek_points,detector,predictor, True))
+        ret, fr = get_frame_at(frame,cap)
+        rects, shapes = face_detect(fr,detector,predictor)
+        if shapes is not None:
+            for shape in shapes:
+                left_cheeky.append(get_frame_average(fr,shape,get_left_cheek_points))
+                right_cheeky.append(get_frame_average(fr,shape, get_right_cheek_points))
+        else:
+            left_cheeky.append(left_cheeky[-1])
+            right_cheeky.append(right_cheeky[-1])
+            print("Duplicated")
+            
     return(np.array(left_cheeky), np.array(right_cheeky))
 
 
@@ -132,10 +142,10 @@ filename = 'cameron.mp4'
 cap = cv2.VideoCapture(filename)
 
 
-l, r = get_time_series(cap,0,250,10)
+l, r = get_time_series(cap,0,1000,10)
 # print(l)
-np.save("left.npy", l)
-np.save("right.npy", r)
+np.save("left_2035.npy", l)
+np.save("right_2035.npy", r)
 
 # detector = dlib.get_frontal_face_detector()
 # predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")

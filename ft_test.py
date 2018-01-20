@@ -12,38 +12,48 @@ def movingaverage (values, window):
     weights = np.repeat(1.0, window)/window
     sma = np.convolve(values, weights, 'valid')
     return sma
- 
 
-left_arr = np.load("left_2035.npy")
-right_arr = np.load("right_2035.npy")
+def nan_remover(array):
+	new_arr = []
+	for index, elem in enumerate(array):
+		print(elem)
+		if str(elem) != 'nan':
+			new_arr.append(elem)
+		else:
+			new_arr.append(new_arr[-1])
+	return np.array(new_arr)
 
 
-frames = 300
-step = 10
-fps = 10
-sample = left_arr
-length = frames
+left_arr = np.load("left_sj.npy")
+right_arr = np.load("right_sj.npy")
+
+
+frames = 100
+step = 24
+fps = 24
 heart_rates = []
-print(len(sample))
-print(len(sample)/step)
 
 def get_hr_seq(frames,step,fps,sample):
 	fts = []
 	heart_rates = []
 	heart_rates_int = []
 	for i in range(0,int((len(sample)-frames)/step)):
-		part = sample[i*step:i*step+frames,1]
-		print(part.shape)
+		part = nan_remover(sample[i*step:i*step+frames,1])
 		ft = np.fft.fftshift(np.fft.fft(part))
 		ft = np.power(np.abs(ft),2)
 		x_range = np.arange(0,frames/fps,1/fps)
 		x_range = x_range[0:-1]
 		x_fft =  np.fft.fftshift(np.fft.fftfreq(frames,x_range[-1]/frames)) * 60
 		pos_50 = find_nearest(x_fft,50)
-		pos_150 = find_nearest(x_fft,150)
-		print(pos_50,pos_150)
-		ft = ft[pos_50:pos_150]
-		heart_rate_int = np.multiply(x_fft[pos_50:pos_150],ft).sum()/ft.sum()
+		pos_200 = find_nearest(x_fft,200)
+		print(pos_50,pos_200)
+		ft = ft[pos_50:pos_200]
+		heart_rate_int = np.multiply(x_fft[pos_50:pos_200],ft).sum()/ft.sum()
+		if str(heart_rate_int) == 'nan':
+			print(ft)
+			print(part)
+			plt.plot(x_fft[pos_50:pos_200], ft)
+			plt.show()
 		heart_rates_int.append(heart_rate_int)
 		fts.append(ft)
 		heart_rates.append(x_fft[ft.argmax()+pos_50])
@@ -67,10 +77,11 @@ heart_rates_right,heart_rates_int_right,fts_right = get_hr_seq(frames,step,fps,r
 
 # heart_rates_left = movingaverage(heart_rates_left,20)
 
-plt.plot(heart_rates_right,'r',label='right')
-plt.plot(heart_rates_left,'b',label='left')
+# plt.plot(heart_rates_right,'r',label='right')
+# plt.plot(heart_rates_left,'b',label='left')
 plt.plot(heart_rates_int_right,'g',label='int right')
 plt.plot(heart_rates_int_left,'k',label = 'int left')
+plt.plot((np.array(heart_rates_int_right) + np.array(heart_rates_int_left))/2, 'c', label = 'avg')
 plt.legend()
 plt.show()
 

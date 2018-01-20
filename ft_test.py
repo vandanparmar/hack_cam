@@ -2,6 +2,8 @@ import numpy as np
 import sklearn.decomposition as dc
 import matplotlib.pyplot as plt
 from matplotlib import colors,cm
+import json
+
 
 def find_nearest(array,value):
 	return (np.abs(array-value)).argmin()
@@ -71,6 +73,13 @@ plt.plot(heart_rates_int_right,'g',label='int right')
 plt.plot(heart_rates_int_left,'k',label = 'int left')
 plt.legend()
 plt.show()
+
+to_save = (np.array(heart_rates_left) + np.array(heart_rates_right)) /2
+to_save = {'hr':to_save.tolist()}
+
+
+with open('data.json', 'w') as outfile:
+    json.dump(to_save, outfile)
 
 # x = np.arange(0, 100)
 

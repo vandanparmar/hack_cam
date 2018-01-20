@@ -132,7 +132,7 @@ filename = 'cameron.mp4'
 cap = cv2.VideoCapture(filename)
 
 
-l, r = get_time_series(cap,0,1000,10)
+l, r = get_time_series(cap,0,250,10)
 # print(l)
 np.save("left.npy", l)
 np.save("right.npy", r)

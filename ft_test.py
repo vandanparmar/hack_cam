@@ -24,21 +24,24 @@ def nan_remover(array):
 	return np.array(new_arr)
 
 
-left_arr = np.load("left_sj.npy")
-right_arr = np.load("right_sj.npy")
+left_arr = np.load("left_0027.npy")
+right_arr = np.load("right_0027.npy")
+rect = np.load("rect_list_0027.npy")
+
+print(left_arr.shape)
+print(right_arr.shape)
 
 
-frames = 100
-step = 24
-fps = 24
+frames = 200
+step = 30
+fps = 30
 heart_rates = []
 
 def get_hr_seq(frames,step,fps,sample):
-	fts = []
-	heart_rates = []
 	heart_rates_int = []
 	for i in range(0,int((len(sample)-frames)/step)):
-		part = nan_remover(sample[i*step:i*step+frames,1])
+		part = sample[i*step:i*step+frames]
+		# part = nan_remover(sample[i*step:i*step+frames,1])
 		ft = np.fft.fftshift(np.fft.fft(part))
 		ft = np.power(np.abs(ft),2)
 		x_range = np.arange(0,frames/fps,1/fps)
@@ -46,21 +49,27 @@ def get_hr_seq(frames,step,fps,sample):
 		x_fft =  np.fft.fftshift(np.fft.fftfreq(frames,x_range[-1]/frames)) * 60
 		pos_50 = find_nearest(x_fft,50)
 		pos_200 = find_nearest(x_fft,200)
-		print(pos_50,pos_200)
 		ft = ft[pos_50:pos_200]
 		heart_rate_int = np.multiply(x_fft[pos_50:pos_200],ft).sum()/ft.sum()
 		if str(heart_rate_int) == 'nan':
-			print(ft)
-			print(part)
 			plt.plot(x_fft[pos_50:pos_200], ft)
 			plt.show()
 		heart_rates_int.append(heart_rate_int)
-		fts.append(ft)
-		heart_rates.append(x_fft[ft.argmax()+pos_50])
-	return heart_rates,heart_rates_int,fts
+	return heart_rates_int
 
-heart_rates_left,heart_rates_int_left,fts_left = get_hr_seq(frames,step,fps,left_arr)
-heart_rates_right,heart_rates_int_right,fts_right = get_hr_seq(frames,step,fps,right_arr)
+heart_rates_left = []
+heart_rates_right = []
+
+heart_rates_left.append(get_hr_seq(frames,step,fps,left_arr[:,0,1]))
+heart_rates_right.append(get_hr_seq(frames,step,fps,right_arr[:,0,1]))
+heart_rates_left.append(get_hr_seq(frames,step,fps,left_arr[:,1,1]))
+heart_rates_right.append(get_hr_seq(frames,step,fps,right_arr[:,1,1]))
+heart_rates_left.append(get_hr_seq(frames,step,fps,left_arr[:,2,1]))
+heart_rates_right.append(get_hr_seq(frames,step,fps,right_arr[:,2,1]))
+
+heart_rates_ave = (np.array(heart_rates_left)+np.array(heart_rates_right))/2
+print(heart_rates_ave.shape)
+
 
 # fts_left = np.array(fts_left)
 
@@ -79,9 +88,9 @@ heart_rates_right,heart_rates_int_right,fts_right = get_hr_seq(frames,step,fps,r
 
 # plt.plot(heart_rates_right,'r',label='right')
 # plt.plot(heart_rates_left,'b',label='left')
-plt.plot(heart_rates_int_right,'g',label='int right')
-plt.plot(heart_rates_int_left,'k',label = 'int left')
-plt.plot((np.array(heart_rates_int_right) + np.array(heart_rates_int_left))/2, 'c', label = 'avg')
+plt.plot(heart_rates_ave[0],'r',label='left')
+plt.plot(heart_rates_ave[1],'g',label='center')
+plt.plot(heart_rates_ave[2],'b',label='right')
 plt.legend()
 plt.show()
 

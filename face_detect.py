@@ -109,7 +109,12 @@ def get_frame_average(frame,shape, points_func):
 
 
 
-def get_time_series(cap,start,frames,freq):
+def key_func(thing):
+    rect, points = thing
+    return rect.left()
+
+
+def get_time_series(cap,start,frames,freq,people):
     fps = cap.get(cv2.CAP_PROP_FPS)
     end = start + frames * fps/freq
     frame_list = np.round(np.arange(start,end,fps/freq))
@@ -117,39 +122,53 @@ def get_time_series(cap,start,frames,freq):
     print(len(frame_list))
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-    left_cheeky = []
-    right_cheeky = []
+    left_cheekies = []
+    right_cheekies = []
+    rect_list = []
     for frame in frame_list:
         print(frame)
         ret, fr = get_frame_at(frame,cap)
-        rects, shapes = face_detect(fr,detector,predictor)
-        if shapes != []:
-            for shape in shapes:
-                left_cheeky.append(get_frame_average(fr,shape,get_left_cheek_points))
-                right_cheeky.append(get_frame_average(fr,shape, get_right_cheek_points))
-            if type(left_cheeky[-1]) == type(None):
-                left_cheeky[-1] = left_cheeky[-2]
-            if type(right_cheeky[-1]) == type(None):
-                right_cheeky[-1] = right_cheeky[-2]
-        else:
-            left_cheeky.append(left_cheeky[-1])
-            right_cheeky.append(right_cheeky[-1])
-            print("Duplicated")
-    return(np.array(left_cheeky), np.array(right_cheeky))
+        things = list(zip(*face_detect(fr,detector,predictor)))
+        if things != []:
+            things = sorted(things,key = key_func)
+            rects, shapes = list(zip(*things))
+            rect_list.append(rects)
+            print(rects)
+            left_cheeky = []
+            right_cheeky = []
+            if (len(shapes)==people):
+                for i,shape in enumerate(shapes):
+                    left = get_frame_average(fr,shape,get_left_cheek_points)
+                    if (type(left)==type(None)):
+                        left = left_cheekies[-1][i]
+                    left_cheeky.append(left)
+                    right = get_frame_average(fr,shape, get_right_cheek_points)
+                    if (type(right)==type(None)):
+                        right = right_cheekies[-1][i]
+                    right_cheeky.append(right)
+                left_cheekies.append(left_cheeky)
+                right_cheekies.append(right_cheeky)        
+            else:
+                left_cheekies.append(left_cheekies[-1])
+                right_cheekies.append(right_cheekies[-1])
+                print("Duplicated")
+
+    return(np.array(left_cheekies), np.array(right_cheekies), rect_list)
 
 
 
 
-filename = 'sj.mp4'
+filename = 'beef.mp4'
 
 
 cap = cv2.VideoCapture(filename)
 
 
-l, r = get_time_series(cap,0,500,24)
+l, r , rects= get_time_series(cap,0,2000,30,3)
 # print(l)
-np.save("left_sj.npy", l)
-np.save("right_sj.npy", r)
+np.save("left_0027.npy", l)
+np.save("right_0027.npy", r)
+np.save("rect_list_0027.npy",rects)
 
 # detector = dlib.get_frontal_face_detector()
 # predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")

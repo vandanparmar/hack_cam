@@ -147,28 +147,34 @@ def get_time_series(cap,start,frames,freq,people):
                         right = right_cheekies[-1][i]
                     right_cheeky.append(right)
                 left_cheekies.append(left_cheeky)
-                right_cheekies.append(right_cheeky)        
+                right_cheekies.append(right_cheeky)
             else:
                 left_cheekies.append(left_cheekies[-1])
                 right_cheekies.append(right_cheekies[-1])
                 print("Duplicated")
+        else:
+            print("No faces detected. Duplicated")
+            if len(left_cheekies) != 0:
+                left_cheekies.append(left_cheekies[-1])
+                right_cheekies.append(right_cheekies[-1])
+    print(len(left_cheekies))
 
     return(np.array(left_cheekies), np.array(right_cheekies), rect_list)
 
 
 
 
-filename = 'beef.mp4'
+filename = 'bolt.mp4'
 
 
 cap = cv2.VideoCapture(filename)
 
 
-l, r , rects= get_time_series(cap,0,2000,30,3)
+l, r , rects= get_time_series(cap,0,1500,24,1)
 # print(l)
-np.save("left_0027.npy", l)
-np.save("right_0027.npy", r)
-np.save("rect_list_0027.npy",rects)
+np.save("left_bolt.npy", l)
+np.save("right_bolt.npy", r)
+np.save("rect_list_bolt.npy",rects)
 
 # detector = dlib.get_frontal_face_detector()
 # predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")

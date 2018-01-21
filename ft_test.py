@@ -26,12 +26,22 @@ def nan_remover(array):
 
 left_arr = np.load("left_0027.npy")
 right_arr = np.load("right_0027.npy")
-rect = np.load("rect_list_0027.npy")
+rects = np.load("rect_list_0027.npy")
 
 print(left_arr.shape)
 print(right_arr.shape)
 
+def rect_to_obj(rect):
+	return {'left':rect.left(),'top':rect.top(),'right':rect.right(),'bottom':rect.bottom()}
 
+bboxs = [[],[],[]]
+
+for rect in rects:
+	to_append = []
+	for i,bbox in enumerate(rect):
+		bboxs[i].append(rect_to_obj(bbox))
+
+print(bboxs)
 frames = 200
 step = 30
 fps = 30
@@ -68,8 +78,6 @@ heart_rates_left.append(get_hr_seq(frames,step,fps,left_arr[:,2,1]))
 heart_rates_right.append(get_hr_seq(frames,step,fps,right_arr[:,2,1]))
 
 heart_rates_ave = (np.array(heart_rates_left)+np.array(heart_rates_right))/2
-print(heart_rates_ave.shape)
-
 
 # fts_left = np.array(fts_left)
 
@@ -94,11 +102,16 @@ plt.plot(heart_rates_ave[2],'b',label='right')
 plt.legend()
 plt.show()
 
-to_save = (np.array(heart_rates_left) + np.array(heart_rates_right)) /2
-to_save = {'hr':to_save.tolist()}
+# to_save = (np.array(heart_rates_left) + np.array(heart_rates_right)) /2
+# to_save = {'hr':to_save.tolist()}
+
+to_save = []
+to_save.append({'name':'Carol Costello','title':'Host, CNN Newsroom','hr':heart_rates_ave[0].tolist(),'bbox':bboxs[:][0]})
+to_save.append({'name':'Ben Shapiro','title':'Political Commentator','hr':heart_rates_ave[1].tolist(),'bbox':bboxs[:][1]})
+to_save.append({'name':'Brian Stelter','title':'Senior Media Correspondant','hr':heart_rates_ave[2].tolist(),'bbox':bboxs[:][2]})
 
 
-with open('data.json', 'w') as outfile:
+with open('data_3.json', 'w') as outfile:
     json.dump(to_save, outfile)
 
 # x = np.arange(0, 100)
